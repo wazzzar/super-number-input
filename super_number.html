@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>super_number</title>
+
+		<style type="text/css">
+			body{
+				font-size: 16px;
+			}
+
+			.super_number input[type=button], .super_number input[type=image]{
+				width: 10px;
+				height: 10px;
+				padding: 0px;
+				margin: 0px;
+			}
+
+			.super_number input.negate{
+				float: left;
+				width: 16px;
+				height: 16px;
+				padding: 0px;
+				margin: 20px 2px 0px 0px;
+			}
+
+			.super_number input.plus{
+				vertical-align: bottom;
+			}
+
+			.super_number input.minus{
+				vertical-align: top;
+			}
+
+			.super_number input[type=text]{
+				width: 8px;
+				padding: 1px;
+				margin: 1px 0px;
+				border: 1px solid #666;
+				border-left: none;
+				border-right: none;
+			}
+
+			.super_number div{
+				float: left;
+			}
+
+			.super_number div:first-of-type input[type=text]{
+				border-left: 1px solid #666;
+			}
+
+			.super_number div:last-of-type input[type=text]{
+				border-right: 1px solid #666;
+			}
+
+			.super_number div.delim{
+				padding-top: 20px;
+			}
+
+		</style>
+
+		<script type="text/javascript">
+			var super_number = function(obj){
+				var scope = this;
+				this.container = document.createElement("span");
+				this.container.className = "super_number";
+				this.inputs = [];
+
+				if(!obj.min && obj.min != 0){ console.error("missing param 'min'"); return; }
+				if(!obj.max && obj.max != 0){ console.error("missing param 'max'"); return; }				
+				if(!obj.val && obj.val != 0){ console.error("missing param 'val'"); return; }
+
+				this.val = obj.val;
+
+				var tmp = this.val.toString().split(".");
+				obj.before = tmp[0].length;
+				obj.after = tmp[1].length;
+				tmp = tmp[0]+tmp[1];
+
+				this.get = function(){
+					this.val = "";
+					for(var i = 0; i < obj.before + obj.after; i++){
+						if(i == obj.before) this.val += ".";
+						this.val += this.inputs[i].firstChild.nextSibling.nextSibling.value+"";
+					}
+
+					this.val = obj.after > 0 ? parseFloat(this.val) : parseInt(this.val);
+					if(this.val < obj.min) this.val = obj.min;
+					if(this.val > obj.max) this.val = obj.max;
+					document.getElementById('result').innerHTML = this.val;
+					return this.val;
+				}
+
+				this.negate = function(){
+					this.val = -this.val;
+					this.ng.value = this.ng.value == '+' ? '-' : '+';
+					document.getElementById('result').innerHTML = this.val;
+				}
+
+				this.build = function(val){
+					var scope = this;
+					var container = document.createElement("div");
+
+					var plus = document.createElement("input");
+					plus.type = "image";
+					plus.src = "img/plus.png";
+					plus.className = "plus";
+					plus.value = " ";
+					plus.title = "больше";
+					plus.addEventListener("mousedown", function(){
+						var inp = this.nextSibling.nextSibling, val = parseInt(inp.value) + 1;
+						inp.value = val;
+						if(val < inp.min) inp.value = inp.min;
+						if(val > inp.max) inp.value = inp.max;
+						scope.get();
+					});
+					container.appendChild(plus);
+					container.appendChild(document.createElement("br"));
+
+					var inp = document.createElement("input");
+					inp.type = "text";
+					inp.maxlength = 1;
+					inp.min = 0;
+					inp.max = 9;
+					inp.value = val;
+					inp.addEventListener("input", function(){
+						var val = parseInt(this.value);
+						if(val < this.min) this.value = this.min;
+						if(val > this.max) this.value = this.max;
+						scope.get();
+					});
+					container.appendChild(inp);
+					container.appendChild(document.createElement("br"));
+
+					var minus = document.createElement("input");
+					minus.type = "image";
+					minus.src = "img/minus.png";
+					minus.className = "minus";
+					minus.value = " ";
+					minus.title = "меньше";
+					minus.addEventListener("mousedown", function(){
+						var inp = this.previousSibling.previousSibling, val = parseInt(inp.value) - 1;
+						inp.value = val;
+						if(val < inp.min) inp.value = inp.min;
+						if(val > inp.max) inp.value = inp.max;
+						scope.get();
+					});
+					container.appendChild(minus);
+
+					return container;
+				}
+
+				this.ng = document.createElement("input");
+				this.ng.type = "button";
+				this.ng.className = "negate";
+				this.ng.value = "+";
+				this.ng.addEventListener("mousedown", function(){
+					scope.negate();
+				});
+				this.container.appendChild(this.ng);
+
+				for(var i = 0; i < obj.before + obj.after; i++){
+					if(i == obj.before){
+						var div = document.createElement("div");
+						div.className = "delim";
+						div.innerHTML = "."
+						this.container.appendChild(div);
+						// continue;
+					}
+					var inp = this.build(tmp[i]);
+					this.inputs.push(inp);
+					this.container.appendChild(inp);
+				}
+				document.getElementById('result').innerHTML = this.val;
+				
+				return this.container;
+			}
+			// добовляем инпут после загрузки страницы
+			window.onload = function(){
+				document.body.appendChild( new super_number({"min":0,"max":123.45,"val":111.11}) );
+			}
+		</script>
+	</head>
+
+	<body>
+		<h2>document.body.appendChild( new super_number({"min":0,"max":123.45,"val":111.11}) );</h2>
+		<h3>Число в инпуте: <i><span id="result">0</span></i></h3>
+	</body>
+</html>
+
